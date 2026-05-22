@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Varandas Delivery - Sistema Integrado Profissional</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .transition-smooth {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .hover-scale {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        
+        .hover-scale:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .order-card {
+            transition: all 0.2s ease;
+        }
+        
+        .order-card:hover {
+            transform: translateX(4px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 1.5rem;
+            max-width: 500px;
+            width: 90%;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            z-index: 1100;
+            animation: slideIn 0.3s ease-out;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .link-share:hover {
+            transform: scale(1.05);
+        }
+        
+        .btn-add {
+            transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        .btn-add-success {
+            background: linear-gradient(to right, #10b981, #059669) !important;
+            transform: scale(0.98);
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .cart-badge-animation {
+            animation: bounce 0.3s ease;
+        }
+        
+        @keyframes phone-ring {
+            0% { transform: rotate(0deg); }
+            10% { transform: rotate(10deg); }
+            20% { transform: rotate(-10deg); }
+            30% { transform: rotate(8deg); }
+            40% { transform: rotate(-8deg); }
+            50% { transform: rotate(5deg); }
+            60% { transform: rotate(-5deg); }
+            70% { transform: rotate(3deg); }
+            80% { transform: rotate(-3deg); }
+            90% { transform: rotate(1deg); }
+            100% { transform: rotate(0deg); }
+        }
+        
+        .phone-animation {
+            animation: phone-ring 1s ease;
+            display: inline-block;
+        }
+        
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        
+        .pulse-red {
+            animation: pulse-ring 1s ease-out;
+        }
+        
+        @media print {
+            body * { visibility: hidden; }
+            #comprovante-impressao, #comprovante-impressao * { visibility: visible; }
+            #comprovante-impressao { position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 20px; }
+            .no-print { display: none !important; }
+        }
+        
+        .sabor-select {
+            border: 2px solid #e5e7eb;
+            transition: all 0.2s ease;
+        }
+        
+        .sabor-select:hover {
+            border-color: #ef4444;
+        }
+        
+        .sabor-select:focus {
+            border-color: #ef4444;
+            outline: none;
+        }
+        
+        .campo-troco {
+            transition: all 0.3s ease;
+        }
+        
+        .campo-troco-aparece {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        @media print {
+            body * { visibility: hidden; }
+            .comprovante-cozinha, .comprovante-cozinha * { visibility: visible; }
+            .comprovante-cozinha { position: absolute; top: 0; left: 0; width: 100%; padding: 10px; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 to-gray-100 font-sans antialiased">
+
+    <nav class="bg-gradient-to-r from-red-700 to-red-600 text-white shadow-xl sticky top-0 z-50 backdrop-blur-sm">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center flex-wrap gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="bg-white/20 p-2 rounded-xl backdrop-blur-sm">
+                    <i class="fa-solid fa-pizza-slice text-2xl text-yellow-400"></i>
+                </div>
+                <div>
+                    <span class="font-extrabold text-xl tracking-tight">Varandas Delivery</span>
+                    <span class="text-xs text-red-200 block">Sistema Integrado Profissional</span>
+                </div>
+            </div>
+            <div class="flex space-x-2 bg-red-800/50 p-1 rounded-xl backdrop-blur-sm">
+                <button onclick="alternarTela('cliente')" id="btn-tela-cliente" class="px-5 py-2 rounded-lg font-semibold text-sm transition-all duration-300 bg-white text-red-600 shadow-lg transform scale-105">
+                    <i class="fa-solid fa-user-tag mr-2"></i> Cliente
+                </button>
+                <button onclick="alternarTela('admin')" id="btn-tela-admin" class="px-5 py-2 rounded-lg font-semibold text-sm transition-all duration-300 text-white hover:bg-white/20">
+                    <i class="fa-solid fa-user-gear mr-2"></i> Painel Admin
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto p-4 min-h-[calc(100vh-64px)]">
+
+        <!-- Tela do Cliente -->
+        <section id="tela-cliente" class="space-y-6 slide-in">
+            <div class="bg-gradient-to-r from-red-500 to-red-600 p-8 rounded-2xl shadow-xl text-white">
+                <h2 class="text-3xl font-extrabold mb-2">Faça seu Pedido</h2>
+                <p class="text-red-100 text-sm">Escolha seus sabores favoritos e receba em casa quentinha!</p>
+                <div class="mt-4 flex gap-2">
+                    <span class="bg-white/20 px-3 py-1 rounded-full text-xs">🍕 Massa Tradicional</span>
+                    <span class="bg-white/20 px-3 py-1 rounded-full text-xs">🧀 Queijo Qualidade</span>
+                    <span class="bg-white/20 px-3 py-1 rounded-full text-xs">🚚 Entrega Rápida</span>
+                    <span class="bg-yellow-400/30 text-yellow-200 px-3 py-1 rounded-full text-xs">🍕 Meia a Meia</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                            <span class="bg-red-100 text-red-600 p-2 rounded-xl"><i class="fa-solid fa-utensils"></i></span>
+                            Cardápio Especial
+                        </h3>
+                        <span class="text-sm text-gray-500"><i class="fa-regular fa-clock"></i> 00:00 - 23:59</span>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-yellow-50 to-orange-50 rounded-2xl p-4 border-2 border-yellow-400 shadow-lg">
+                        <div class="flex items-center gap-3 mb-3">
+                            <div class="bg-yellow-500 p-3 rounded-xl">
+                                <i class="fa-solid fa-pizza-slice text-2xl text-white"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 text-lg">🍕 Pizza Meia a Meia (2 Sabores)</h4>
+                                <p class="text-sm text-gray-600">Escolha dois sabores diferentes por um preço especial!</p>
+                            </div>
+                        </div>
+                        <button onclick="abrirModalDoisSabores()" class="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-md">
+                            <i class="fa-solid fa-cart-plus"></i> Montar Pizza de 2 Sabores
+                        </button>
+                    </div>
+
+                    <div id="grid-cardapio" class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        </div>
+                </div>
+
+                <div class="space-y-4">
+                    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 sticky top-24">
+                        <div class="bg-gradient-to-r from-gray-800 to-gray-900 text-white p-4 rounded-t-2xl">
+                            <h3 class="text-lg font-bold flex items-center gap-2">
+                                <i class="fa-solid fa-basket-shopping"></i>
+                                Seu Carrinho
+                                <span id="carrinho-count" class="bg-yellow-500 text-gray-900 text-xs px-2 py-1 rounded-full ml-2">0</span>
+                            </h3>
+                        </div>
+                        
+                        <div class="p-5 space-y-4">
+                            <div id="itens-carrinho" class="divide-y divide-gray-100 max-h-80 overflow-y-auto">
+                                <div class="text-center py-8">
+                                    <i class="fa-solid fa-cart-shopping text-4xl text-gray-300 mb-2"></i>
+                                    <p class="text-gray-400 text-sm">Seu carrinho está vazio</p>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-between items-center font-bold text-gray-800 border-t pt-4 text-xl">
+                                <span>Total</span>
+                                <span id="total-carrinho" class="text-red-600 text-2xl">R$ 0,00</span>
+                            </div>
+
+                            <div class="space-y-3 pt-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-600 uppercase mb-2">
+                                        <i class="fa-regular fa-user"></i> Nome Completo
+                                    </label>
+                                    <input type="text" id="cliente-nome" placeholder="Digite seu nome completo" class="w-full border-2 border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-600 uppercase mb-2">
+                                        <i class="fa-solid fa-phone"></i> Telefone (com WhatsApp)
+                                    </label>
+                                    <input type="tel" id="cliente-telefone" placeholder="(11) 99999-9999" class="w-full border-2 border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-600 uppercase mb-2">
+                                        <i class="fa-solid fa-location-dot"></i> Endereço de Entrega
+                                    </label>
+                                    <input type="text" id="cliente-endereco" placeholder="Rua, número, bairro, referência" class="w-full border-2 border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-gray-600 uppercase mb-2">
+                                        <i class="fa-regular fa-credit-card"></i> Forma de Pagamento
+                                    </label>
+                                    <select id="cliente-pagamento" class="w-full border-2 border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all">
+                                       <option value="Pix">💳 Pix</option>
+                                        <option value="Cartão de Crédito/Débito">💳 Cartão (Entregador leva a máquina)</option>
+                                        <option value="Dinheiro">💰 Dinheiro</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Campo de Troco para Dinheiro -->
+                                <div id="campo-troco" class="hidden campo-troco">
+                                    <label class="block text-xs font-bold text-gray-600 uppercase mb-2">
+                                        <i class="fa-solid fa-money-bill-wave"></i> Vai precisar de troco? Para quanto?
+                                    </label>
+                                    <input type="number" id="cliente-troco" step="1" min="0" placeholder="Ex: 100 (valor que vai pagar)" class="w-full border-2 border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all">
+                                    <p class="text-xs text-gray-500 mt-1">* Informe o valor que irá pagar para calcularmos o troco</p>
+                                </div>
+                            </div>
+
+                            <button onclick="finalizarPedidoCliente()" class="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg transform hover:scale-105">
+                                <i class="fa-brands fa-whatsapp text-xl"></i> Enviar Pedido via WhatsApp
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tela do Administrador -->
+        <section id="tela-admin" class="hidden space-y-6 slide-in">
+            <div class="bg-gradient-to-r from-gray-800 to-gray-900 text-white p-6 rounded-2xl shadow-xl">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold mb-1 flex items-center gap-2">
+                            <span class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></span>
+                            Painel de Controle
+                        </h2>
+                        <p class="text-gray-400 text-sm">Gestão completa de pedidos e cardápio</p>
+                    </div>
+                    <div class="flex gap-2 flex-wrap">
+                        <button onclick="simularChegadaPedido()" class="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-xl font-bold text-sm transition-all duration-300 shadow-md flex items-center gap-2">
+                            <i class="fa-solid fa-bolt"></i> Simular Pedido
+                        </button>
+                        <button onclick="testarSomTelefone()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-5 py-2 rounded-xl font-bold text-sm transition-all duration-300 shadow-md flex items-center gap-2">
+                            <i class="fa-solid fa-phone"></i> Testar Telefone
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="mt-6 bg-white/10 rounded-xl p-4 border border-white/20">
+                    <div class="flex items-center gap-3 mb-3">
+                        <i class="fa-solid fa-share-alt text-2xl text-yellow-400"></i>
+                        <h3 class="font-bold text-lg">Compartilhar Cardápio com Clientes</h3>
+                    </div>
+                    <p class="text-gray-300 text-sm mb-3">Envie este link para seus clientes fazerem pedidos diretamente pelo WhatsApp:</p>
+                    <div class="flex flex-col sm:flex-row gap-3">
+                        <div class="flex-1 bg-gray-900 rounded-xl p-3 text-sm font-mono break-all" id="link-compartilhar">Carregando...</div>
+                        <div class="flex gap-2">
+                            <button onclick="copiarLinkCliente()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl font-bold text-sm transition-all duration-300 flex items-center gap-2 link-share">
+                                <i class="fa-regular fa-copy"></i> Copiar Link
+                            </button>
+                            <button onclick="compartilharWhatsApp()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-3 rounded-xl font-bold text-sm transition-all duration-300 flex items-center gap-2 link-share">
+                                <i class="fa-brands fa-whatsapp"></i> Enviar no WhatsApp
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 space-y-4">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-folder-plus text-red-600"></i> Cadastrar Nova Pizza
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div><label class="block text-xs font-bold text-gray-600 uppercase mb-2">Nome da Pizza</label><input type="text" id="nova-pizza-nome" placeholder="Ex: Portuguesa" class="w-full border-2 border-gray-200 rounded-xl p-3 text-sm"></div>
+                    <div><label class="block text-xs font-bold text-gray-600 uppercase mb-2">Preço (R$)</label><input type="number" id="nova-pizza-preco" placeholder="Ex: 50.00" step="0.01" class="w-full border-2 border-gray-200 rounded-xl p-3 text-sm"></div>
+                    <div><label class="block text-xs font-bold text-gray-600 uppercase mb-2">Foto da Pizza</label><input type="file" id="nova-pizza-img" accept="image/*" class="w-full border-2 border-gray-200 rounded-xl p-2 text-sm"></div>
+                </div>
+                <div><label class="block text-xs font-bold text-gray-600 uppercase mb-2">Ingredientes / Descrição</label><textarea id="nova-pizza-desc" rows="2" class="w-full border-2 border-gray-200 rounded-xl p-3 text-sm"></textarea></div>
+                <div class="flex justify-end pt-2"><button onclick="adicionarPizzaAoCardapio()" class="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-bold py-2.5 px-8 rounded-xl shadow-md hover:scale-105"><i class="fa-solid fa-floppy-disk mr-2"></i> Salvar no Cardápio</button></div>
+            </div>
+
+            <div class="bg-white p-6 rounded-2xl shadow-lg border border-gray-100 space-y-4">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-pizza-slice text-red-600"></i> Gerenciar Cardápio
+                </h3>
+                <div id="lista-cardapio-admin" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto p-2"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-gradient-to-br from-orange-50 to-orange-100/50 p-4 rounded-2xl shadow-lg border border-orange-200 min-h-[500px] flex flex-col">
+                    <div class="flex justify-between items-center mb-4 pb-3 border-b-2 border-orange-300">
+                        <span class="font-bold text-orange-800 flex items-center gap-2"><i class="fa-solid fa-fire-burner text-orange-600 text-xl"></i> Na Cozinha</span>
+                        <span id="qtd-cozinha" class="bg-orange-600 text-white px-3 py-1 rounded-full text-sm font-bold">0</span>
+                    </div>
+                    <div id="coluna-cozinha" class="space-y-3 flex-1 overflow-y-auto"></div>
+                </div>
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 p-4 rounded-2xl shadow-lg border border-blue-200 min-h-[500px] flex flex-col">
+                    <div class="flex justify-between items-center mb-4 pb-3 border-b-2 border-blue-300">
+                        <span class="font-bold text-blue-800 flex items-center gap-2"><i class="fa-solid fa-boxes-packing text-blue-600 text-xl"></i> Pronto para Despacho</span>
+                        <span id="qtd-pronto" class="bg-blue-600 text-white px-3 py-1 rounded-full text-sm font-bold">0</span>
+                    </div>
+                    <div id="coluna-pronto" class="space-y-3 flex-1 overflow-y-auto"></div>
+                </div>
+                <div class="bg-gradient-to-br from-green-50 to-green-100/50 p-4 rounded-2xl shadow-lg border border-green-200 min-h-[500px] flex flex-col">
+                    <div class="flex justify-between items-center mb-4 pb-3 border-b-2 border-green-300">
+                        <span class="font-bold text-green-800 flex items-center gap-2"><i class="fa-solid fa-motorcycle text-green-600 text-xl"></i> Em Rota de Entrega</span>
+                        <span id="qtd-entrega" class="bg-green-600 text-white px-3 py-1 rounded-full text-sm font-bold">0</span>
+                    </div>
+                    <div id="coluna-entrega" class="space-y-3 flex-1 overflow-y-auto"></div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Modal para Pizza de Dois Sabores -->
+    <div id="modalDoisSabores" class="modal">
+        <div class="modal-content p-6 max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-pizza-slice text-yellow-500"></i>
+                    Pizza Meia a Meia
+                </h3>
+                <button onclick="fecharModalDoisSabores()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa-solid fa-times text-2xl"></i>
+                </button>
+            </div>
+            <p class="text-gray-600 text-sm mb-4">Escolha dois sabores diferentes para sua pizza:</p>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">🍕 Primeiro Sabor (Metade)</label>
+                    <select id="sabor1" class="w-full border-2 border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-yellow-500 sabor-select">
+                        <option value="">Selecione um sabor...</option>
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-2">🍕 Segundo Sabor (Metade)</label>
+                    <select id="sabor2" class="w-full border-2 border-gray-200 rounded-xl p-3 text-sm focus:outline-none focus:border-yellow-500 sabor-select">
+                        <option value="">Selecione um sabor...</option>
+                    </select>
+                </div>
+                
+                <div class="bg-yellow-50 p-4 rounded-xl border border-yellow-200">
+                    <div class="flex justify-between items-center">
+                        <span class="font-bold text-gray-700">Preço da Pizza Meia a Meia:</span>
+                        <span class="text-2xl font-bold text-yellow-600" id="precoMeiaMeia">R$ 0,00</span>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-2">* O preço é a média dos dois sabores escolhidos</p>
+                </div>
+                
+                <button onclick="adicionarPizzaMeiaMeia()" class="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-bold py-3 rounded-xl transition-all duration-300 flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-cart-plus"></i> Adicionar ao Carrinho
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content p-6">
+            <div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold text-gray-800">Editar Pizza</h3><button onclick="fecharModal()" class="text-gray-400 hover:text-gray-600"><i class="fa-solid fa-times text-2xl"></i></button></div>
+            <input type="hidden" id="edit-pizza-id">
+            <div class="space-y-4">
+                <div><label class="block text-xs font-bold text-gray-600 uppercase mb-2">Nome da Pizza</label><input type="text" id="edit-pizza-nome" class="w-full border-2 border-gray-200 rounded-xl p-3 text-sm"></div>
+                <div><label class="block text-xs font-bold text-gray-600 uppercase mb-2">Preço (R$)</label><input type="number" id="edit-pizza-preco" step="0.01" class="w-full border-2 border-gray-200 rounded-xl p-3 text-sm"></div>
+                <div><label class="block text-xs font-bold text-gray-600 uppercase mb-2">Descrição</label><textarea id="edit-pizza-desc" rows="3" class="w-full border-2 border-gray-200 rounded-xl p-3 text-sm"></textarea></div>
+                <div><label class="block text-xs font-bold text-gray-600 uppercase mb-2">Nova Foto (opcional)</label><input type="file" id="edit-pizza-img" accept="image/*" class="w-full border-2 border-gray-200 rounded-xl p-2 text-sm"></div>
+                <div class="flex gap-3 pt-4"><button onclick="salvarEdicaoPizza()" class="flex-1 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2.5 rounded-xl"><i class="fa-solid fa-save mr-2"></i> Salvar</button><button onclick="fecharModal()" class="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-700 font-bold py-2.5 rounded-xl">Cancelar</button></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="comprovante-impressao" style="display: none; padding: 20px; font-family: monospace; max-width: 300px; margin: 0 auto;"></div>
+
+    <footer class="bg-gray-900 text-gray-400 py-6 text-center text-sm mt-8">
+        <div class="max-w-7xl mx-auto"><p>&copy; 2026 Varandas Delivery - Sistema Integrado Profissional</p><p class="text-xs mt-1">Desenvolvido com <i class="fa-solid fa-heart text-red-500"></i> para sua pizzaria</p></div>
+    </footer>
+
+    <script>
+        // CONFIGURAÇÃO DO NÚMERO DE WHATSAPP DA PIZZARIA
+        const NUMERO_PIZZARIA = "5512987035321"; // Número fixo (12) 98703-5321
+        const NUMERO_PIZZARIA_FORMATADO = "5512987035321";
+        
+        let cardapio = [], carrinho = [], pedidosAdmin = [], proximoIdPedido = 1001;
+        let audioContext = null;
+
+        document.getElementById('cliente-pagamento').addEventListener('change', function() {
+            const campoTroco = document.getElementById('campo-troco');
+            if (this.value === 'Dinheiro') {
+                campoTroco.classList.remove('hidden');
+                campoTroco.classList.add('campo-troco-aparece');
+            } else {
+                campoTroco.classList.add('hidden');
+                document.getElementById('cliente-troco').value = '';
+            }
+        });
+
+        function tocarSomTelefone() {
+            try {
+                if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const now = audioContext.currentTime;
+                const notas = [523.25, 0, 523.25, 0, 587.33, 0, 523.25, 0, 493.88, 0, 440.00, 0, 440.00, 0];
+                const duracoes = [0.15, 0.05, 0.15, 0.05, 0.15, 0.05, 0.15, 0.05, 0.15, 0.05, 0.15, 0.05, 0.3, 0.1];
+                let tempoAtual = now;
+                for (let i = 0; i < notas.length; i++) {
+                    if (notas[i] > 0) {
+                        const osc = audioContext.createOscillator();
+                        const gain = audioContext.createGain();
+                        osc.connect(gain);
+                        gain.connect(audioContext.destination);
+                        osc.frequency.value = notas[i];
+                        osc.type = 'sine';
+                        gain.gain.value = 0.5;
+                        osc.start(tempoAtual);
+                        gain.gain.exponentialRampToValueAtTime(0.00001, tempoAtual + duracoes[i]);
+                        osc.stop(tempoAtual + duracoes[i]);
+                    }
+                    tempoAtual += duracoes[i];
+                }
+                setTimeout(() => {
+                    const oscFinal = audioContext.createOscillator();
+                    const gainFinal = audioContext.createGain();
+                    oscFinal.connect(gainFinal);
+                    gainFinal.connect(audioContext.destination);
+                    oscFinal.frequency.value = 880;
+                    oscFinal.type = 'sine';
+                    gainFinal.gain.value = 0.6;
+                    oscFinal.start();
+                    gainFinal.gain.exponentialRampToValueAtTime(0.00001, audioContext.currentTime + 0.3);
+                    setTimeout(() => oscFinal.stop(), 300);
+                }, 500);
+                
+                const telefones = document.querySelectorAll('.fa-phone, .fa-phone-alt, .fa-phone-volume');
+                telefones.forEach(tel => { tel.classList.add('phone-animation'); setTimeout(() => tel.classList.remove('phone-animation'), 1000); });
+                document.body.classList.add('pulse-red');
+                setTimeout(() => document.body.classList.remove('pulse-red'), 1000);
+            } catch (e) { console.log('Erro no áudio:', e); }
+        }
+        
+        function testarSomTelefone() { tocarSomTelefone(); showToast('🔔 Teste de som executado!', 'blue'); }
+
+        // Função para enviar WhatsApp para o número da pizzaria (12) 98703-5321
+        function enviarWhatsAppPizzaria(mensagem) {
+            const msg = encodeURIComponent(mensagem);
+            window.open(`https://wa.me/${NUMERO_PIZZARIA}?text=${msg}`, '_blank');
+        }
+
+        // Função para enviar WhatsApp para o cliente
+        function enviarWhatsAppCliente(pedido, tipo) {
+            if (!pedido.telefone || pedido.telefone === '') return;
+            
+            let mensagem = '';
+            let numero = pedido.telefone.replace(/\D/g, '');
+            if (numero.length === 11 || numero.length === 10) {
+                if (numero.length === 10) numero = '55' + numero;
+                if (numero.length === 11) numero = '55' + numero;
+            }
+            
+            const itensResumo = pedido.itens.map(i => `${i.quantidade}x ${i.sabor}`).join(', ');
+            
+            if (tipo === 'despacho') {
+                mensagem = encodeURIComponent(
+                    `🍕 *VARANDAS DELIVERY* 🍕\n\n` +
+                    `✅ *SEU PEDIDO SAIU PARA ENTREGA!*\n\n` +
+                    `📋 *Pedido #${pedido.id}*\n` +
+                    `👤 *Cliente:* ${pedido.nome}\n` +
+                    `📍 *Endereço:* ${pedido.endereco}\n` +
+                    `📦 *Itens:* ${itensResumo}\n` +
+                    `💰 *Total:* R$ ${pedido.total.toFixed(2)}\n\n` +
+                    `🛵 *Seu pedido está a caminho!*\n` +
+                    `⏱️ *Tempo estimado:* 10 a 20 minutos\n\n` +
+                    `💚 *Agradecemos pela preferência!*`
+                );
+            } else if (tipo === 'confirmacao') {
+                let infoTroco = '';
+                if (pedido.pagamento === 'Dinheiro' && pedido.troco) {
+                    const valorPago = parseFloat(pedido.troco);
+                    const trocoCalculado = valorPago - pedido.total;
+                    infoTroco = `\n💰 *Troco:* R$ ${trocoCalculado.toFixed(2)} (Você pagará R$ ${valorPago.toFixed(2)})\n`;
+                }
+                
+                mensagem = encodeURIComponent(
+                    `🍕 *VARANDAS DELIVERY* 🍕\n\n` +
+                    `✅ *PEDIDO CONFIRMADO!*\n\n` +
+                    `📋 *Pedido #${pedido.id}*\n` +
+                    `👤 *Cliente:* ${pedido.nome}\n` +
+                    `📍 *Endereço:* ${pedido.endereco}\n` +
+                    `📦 *Itens:* ${itensResumo}\n` +
+                    `💰 *Total:* R$ ${pedido.total.toFixed(2)}${infoTroco}\n\n` +
+                    `⏱️ *Seu pedido está sendo preparado!*\n` +
+                    `🕐 *Tempo estimado para entrega:* 10 a 20 minutos\n\n` +
+                    `🔔 *Você receberá outra mensagem quando seu pedido sair para entrega!*\n\n` +
+                    `💚 *Obrigado por escolher a Varandas Delivery!*`
+                );
+            }
+            
+            if (mensagem) {
+                window.open(`https://wa.me/${numero}?text=${mensagem}`, '_blank');
+                showToast(`📱 Mensagem enviada para ${pedido.nome}`, 'green');
+            }
+        }
+
+        // Função para imprimir comprovante da cozinha
+        function imprimirComprovanteCozinha(pedido) {
+            const itensHtml = pedido.itens.map(item => `<tr><td style="padding: 2px 0;">${item.quantidade}x ${item.sabor}</td><td style="text-align: right;">R$ ${(item.preco * item.quantidade).toFixed(2)}</td></tr>`).join('');
+            
+            let infoTroco = '';
+            if (pedido.pagamento === 'Dinheiro' && pedido.troco) {
+                const valorPago = parseFloat(pedido.troco);
+                const trocoCalculado = valorPago - pedido.total;
+                infoTroco = `<p><strong>💰 Troco:</strong> R$ ${trocoCalculado.toFixed(2)} (Paga: R$ ${valorPago.toFixed(2)})</p>`;
+            }
+            
+            const comprovanteHtml = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Comprovante Pedido #${pedido.id}</title>
+                    <style>
+                        @page { size: 80mm 297mm; margin: 0; }
+                        body { font-family: monospace; font-size: 12px; width: 80mm; margin: 0; padding: 5px; background: white; }
+                        .comprovante { font-family: monospace; width: 100%; padding: 5px; }
+                        .titulo { text-align: center; font-size: 14px; font-weight: bold; border-bottom: 1px dashed #333; padding-bottom: 5px; margin-bottom: 10px; }
+                        .info { font-size: 11px; margin-bottom: 10px; }
+                        .itens { border-top: 1px dotted #333; border-bottom: 1px dotted #333; padding: 5px 0; margin: 5px 0; }
+                        .total { font-size: 13px; font-weight: bold; text-align: right; border-top: 1px solid #333; padding-top: 5px; margin-top: 5px; }
+                        .rodape { text-align: center; font-size: 9px; margin-top: 10px; padding-top: 5px; border-top: 1px dashed #333; }
+                        table { width: 100%; font-size: 11px; }
+                        td { padding: 2px 0; }
+                        .text-right { text-align: right; }
+                    </style>
+                </head>
+                <body>
+                    <div class="comprovante">
+                        <div class="titulo">🍕 VARANDAS DELIVERY<br>COMPROVANTE DE PREPARO</div>
+                        <div class="info">
+                            <strong>📋 PEDIDO #${pedido.id}</strong><br>
+                            🕐 ${new Date().toLocaleString('pt-BR')}<br>
+                            👤 ${pedido.nome}<br>
+                            📍 ${pedido.endereco}<br>
+                            💳 ${pedido.pagamento}
+                            ${infoTroco}
+                        </div>
+                        <div class="itens">
+                            <strong>📦 ITENS:</strong><br>
+                            <table>${itensHtml}</table>
+                        </div>
+                        <div class="total">TOTAL: R$ ${pedido.total.toFixed(2)}</div>
+                        <div class="rodape">
+                            ✅ Pedido confirmado para preparo!<br>
+                            ⏱️ Tempo estimado: 10-20 min<br><br>
+                            🍕 Varandas Delivery<br>Agradecemos a preferência!
+                        </div>
+                    </div>
+                    <script>
+                        window.onload = function() {
+                            setTimeout(function() { window.print(); setTimeout(function() { window.close(); }, 1500); }, 300);
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `;
+            
+            const printWindow = window.open('', '_blank', 'width=400,height=600');
+            if (printWindow) {
+                printWindow.document.write(comprovanteHtml);
+                printWindow.document.close();
+                showToast(`🖨️ Comprovante do pedido #${pedido.id} enviado para impressão!`, 'blue');
+            } else {
+                showToast('⚠️ Permitir pop-ups para impressão automática!', 'red');
+            }
+        }
+
+        async function gerarPDF(pedido) {
+            const itensHtml = pedido.itens.map(item => `<tr><td style="padding: 5px 0;">${item.quantidade}x ${item.sabor}</td><td style="text-align: right;">R$ ${(item.preco * item.quantidade).toFixed(2)}</td></tr>`).join('');
+            let infoTroco = '';
+            if (pedido.pagamento === 'Dinheiro' && pedido.troco) {
+                const valorPago = parseFloat(pedido.troco);
+                const trocoCalculado = valorPago - pedido.total;
+                infoTroco = `<p><strong>💰 Troco para:</strong> R$ ${valorPago.toFixed(2)} (Troco: R$ ${trocoCalculado.toFixed(2)})</p>`;
+            }
+            const comprovanteHtml = `<div style="font-family: monospace; max-width: 300px; margin: 0 auto; padding: 20px; border: 2px dashed #333; border-radius: 10px;"><div style="text-align: center; border-bottom: 1px dashed #333; padding-bottom: 10px;"><h2>🍕 VARANDAS DELIVERY</h2><p>Pedido #${pedido.id}</p></div><div><p><strong>Cliente:</strong> ${pedido.nome}</p><p><strong>Telefone:</strong> ${pedido.telefone || 'Não informado'}</p><p><strong>Endereço:</strong> ${pedido.endereco}</p><p><strong>Pagamento:</strong> ${pedido.pagamento}</p>${infoTroco}<p><strong>Data:</strong> ${new Date().toLocaleString('pt-BR')}</p></div><hr/><table width="100%">${itensHtml}<tr style="border-top: 1px solid #ccc;"><td><strong>TOTAL</strong></td><td align="right"><strong>R$ ${pedido.total.toFixed(2)}</strong></td></tr></table><hr/><div style="text-align:center;font-size:11px"><p>✅ Pedido confirmado!</p><p>⏱️ Tempo estimado: 10 a 20 minutos</p></div></div>`;
+            const element = document.createElement('div');
+            element.innerHTML = comprovanteHtml;
+            element.style.position = 'absolute'; element.style.left = '-9999px'; element.style.top = '-9999px';
+            document.body.appendChild(element);
+            try {
+                await html2pdf().set({ margin: [0.5, 0.5, 0.5, 0.5], filename: `pedido_${pedido.id}_varandas.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } }).from(element).save();
+                showToast('📄 PDF do pedido gerado!', 'green');
+            } catch(error) { console.error(error); }
+            finally { document.body.removeChild(element); }
+        }
+
+        function getClienteLink() { return `${window.location.href.split('?')[0]}?modo=cliente`; }
+        function isModoClienteOnly() { return new URLSearchParams(window.location.search).get('modo') === 'cliente'; }
+        function showToast(mensagem, cor) { const toast = document.createElement('div'); toast.className = `toast bg-${cor}-500`; toast.innerHTML = `<i class="fa-solid fa-check-circle mr-2"></i> ${mensagem}`; document.body.appendChild(toast); setTimeout(() => toast.remove(), 3000); }
+        function copiarLinkCliente() { navigator.clipboard.writeText(getClienteLink()); showToast('Link copiado!', 'green'); }
+        function compartilharWhatsApp() { window.open(`https://wa.me/${NUMERO_PIZZARIA}?text=${encodeURIComponent(`🍕 Varandas Delivery 🍕\n\nFaça seu pedido online:\n${getClienteLink()}`)}`, '_blank'); }
+        function atualizarLinkAdmin() { const el = document.getElementById('link-compartilhar'); if(el) el.innerText = getClienteLink(); }
+        
+        function carregarDados() {
+            const saved = localStorage.getItem('cardapio_varandas');
+            if(saved) cardapio = JSON.parse(saved);
+            else { cardapio = [{ id:1, nome:"Margherita Especial", preco:49.90, desc:"Molho fresco, mussarela de búfala, manjericão.", imagem:"https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop" },{ id:2, nome:"Pepperoni Premium", preco:59.90, desc:"Mussarela, pepperoni importado, orégano.", imagem:"https://images.unsplash.com/photo-1628840042765-356cda07504e?w=400&h=300&fit=crop" },{ id:3, nome:"Quatro Queijos", preco:54.90, desc:"Mussarela, provolone, parmesão, gorgonzola.", imagem:"https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop" }]; localStorage.setItem('cardapio_varandas', JSON.stringify(cardapio)); }
+            const pedidosSalvos = localStorage.getItem('pedidos_varandas');
+            if(pedidosSalvos) { pedidosAdmin = JSON.parse(pedidosSalvos); const ultimoId = localStorage.getItem('ultimoIdPedido'); if(ultimoId) proximoIdPedido = parseInt(ultimoId) + 1; }
+            const carrinhoSalvo = localStorage.getItem('carrinho_varandas');
+            if(carrinhoSalvo) carrinho = JSON.parse(carrinhoSalvo);
+        }
+        function salvarCardapio() { localStorage.setItem('cardapio_varandas', JSON.stringify(cardapio)); }
+        function salvarPedidos() { localStorage.setItem('pedidos_varandas', JSON.stringify(pedidosAdmin)); localStorage.setItem('ultimoIdPedido', proximoIdPedido - 1); }
+        function salvarCarrinho() { localStorage.setItem('carrinho_varandas', JSON.stringify(carrinho)); }
+        
+        function configurarModo() {
+            if(isModoClienteOnly()) {
+                document.getElementById('btn-tela-admin').style.display = 'none';
+                document.getElementById('btn-tela-cliente').style.display = 'none';
+                document.getElementById('tela-cliente').classList.remove('hidden');
+                document.getElementById('tela-admin').classList.add('hidden');
+                document.querySelector('footer').style.display = 'none';
+                const badge = document.createElement('div'); badge.id = 'modo-cliente-badge'; badge.className = 'bg-yellow-400 text-red-800 px-3 py-1 rounded-full text-xs font-bold'; badge.innerHTML = '<i class="fa-solid fa-mobile-alt mr-1"></i> Modo Cliente';
+                document.querySelector('nav .flex.items-center:first-child').appendChild(badge);
+            } else { document.getElementById('btn-tela-admin').style.display = 'block'; document.getElementById('btn-tela-cliente').style.display = 'block'; document.querySelector('footer').style.display = 'block'; atualizarLinkAdmin(); }
+        }
+        
+        function alternarTela(tela) {
+            const tCliente = document.getElementById('tela-cliente'), tAdmin = document.getElementById('tela-admin');
+            const btnCliente = document.getElementById('btn-tela-cliente'), btnAdmin = document.getElementById('btn-tela-admin');
+            if(tela === 'cliente') {
+                tCliente.classList.remove('hidden'); tAdmin.classList.add('hidden');
+                btnCliente.className = "px-5 py-2 rounded-lg font-semibold text-sm bg-white text-red-600 shadow-lg scale-105";
+                btnAdmin.className = "px-5 py-2 rounded-lg font-semibold text-sm text-white hover:bg-white/20";
+                renderizarCardapioCliente(); atualizarCarrinhoVisual();
+            } else {
+                tCliente.classList.add('hidden'); tAdmin.classList.remove('hidden');
+                btnCliente.className = "px-5 py-2 rounded-lg font-semibold text-sm text-white hover:bg-white/20";
+                btnAdmin.className = "px-5 py-2 rounded-lg font-semibold text-sm bg-white text-red-600 shadow-lg scale-105";
+                renderizarPainelAdmin(); renderizarListaCardapioAdmin(); atualizarLinkAdmin();
+            }
+        }
+        
+        function adicionarPizzaAoCardapio() {
+            const nome = document.getElementById('nova-pizza-nome').value.trim();
+            const preco = parseFloat(document.getElementById('nova-pizza-preco').value);
+            const desc = document.getElementById('nova-pizza-desc').value.trim();
+            const fileInput = document.getElementById('nova-pizza-img');
+            if(!nome || isNaN(preco) || preco<=0 || !desc) { alert('❌ Preencha todos os campos!'); return; }
+            const processar = (imgUrl) => { cardapio.push({ id:Date.now(), nome, preco, desc, imagem:imgUrl }); salvarCardapio(); document.getElementById('nova-pizza-nome').value=''; document.getElementById('nova-pizza-preco').value=''; document.getElementById('nova-pizza-desc').value=''; document.getElementById('nova-pizza-img').value=''; alert(`✅ "${nome}" adicionado!`); renderizarCardapioCliente(); renderizarListaCardapioAdmin(); };
+            if(fileInput.files && fileInput.files[0]) { const reader = new FileReader(); reader.onload = e => processar(e.target.result); reader.readAsDataURL(fileInput.files[0]); } else processar("https://via.placeholder.com/400x300?text=Pizza");
+        }
+        
+        function excluirPizza(id) { if(confirm('Excluir pizza?')) { cardapio = cardapio.filter(p => p.id !== id); salvarCardapio(); renderizarCardapioCliente(); renderizarListaCardapioAdmin(); alert('✅ Removida!'); } }
+        
+        function abrirModalEdicao(id) { const p = cardapio.find(p => p.id === id); if(p) { document.getElementById('edit-pizza-id').value = p.id; document.getElementById('edit-pizza-nome').value = p.nome; document.getElementById('edit-pizza-preco').value = p.preco; document.getElementById('edit-pizza-desc').value = p.desc; document.getElementById('edit-pizza-img').value = ''; document.getElementById('editModal').classList.add('active'); } }
+        function fecharModal() { document.getElementById('editModal').classList.remove('active'); }
+        function salvarEdicaoPizza() {
+            const id = parseInt(document.getElementById('edit-pizza-id').value);
+            const nome = document.getElementById('edit-pizza-nome').value.trim();
+            const preco = parseFloat(document.getElementById('edit-pizza-preco').value);
+            const desc = document.getElementById('edit-pizza-desc').value.trim();
+            const fileInput = document.getElementById('edit-pizza-img');
+            if(!nome || isNaN(preco) || preco<=0 || !desc) { alert('Preencha todos os campos!'); return; }
+            const idx = cardapio.findIndex(p => p.id === id);
+            if(idx !== -1) {
+                const processar = (img) => { cardapio[idx] = { ...cardapio[idx], nome, preco, desc, imagem: img || cardapio[idx].imagem }; salvarCardapio(); fecharModal(); renderizarCardapioCliente(); renderizarListaCardapioAdmin(); alert('✅ Atualizada!'); };
+                if(fileInput.files && fileInput.files[0]) { const reader = new FileReader(); reader.onload = e => processar(e.target.result); reader.readAsDataURL(fileInput.files[0]); } else processar(null);
+            }
+        }
+        
+        function renderizarListaCardapioAdmin() {
+            const container = document.getElementById('lista-cardapio-admin');
+            if(!container) return;
+            if(cardapio.length === 0) { container.innerHTML = '<div class="col-span-full text-center py-8 text-gray-400">📭 Nenhuma pizza</div>'; return; }
+            container.innerHTML = cardapio.map(p => `<div class="bg-gray-50 rounded-xl p-3 border"><div class="flex gap-3"><img src="${p.imagem}" class="w-20 h-20 object-cover rounded-lg"><div class="flex-1"><h4 class="font-bold">${p.nome}</h4><p class="text-red-600 font-bold">R$ ${p.preco.toFixed(2)}</p><p class="text-gray-500 text-xs">${p.desc.substring(0,50)}...</p><div class="flex gap-2 mt-2"><button onclick="abrirModalEdicao(${p.id})" class="bg-blue-500 text-white px-3 py-1 rounded-lg text-xs"><i class="fa-solid fa-pen"></i> Editar</button><button onclick="excluirPizza(${p.id})" class="bg-red-500 text-white px-3 py-1 rounded-lg text-xs"><i class="fa-solid fa-trash"></i> Excluir</button></div></div></div></div>`).join('');
+        }
+        
+        function renderizarCardapioCliente() {
+            const grid = document.getElementById('grid-cardapio');
+            if(!grid) return;
+            grid.innerHTML = '';
+            if(cardapio.length === 0) { grid.innerHTML = '<div class="col-span-2 text-center py-12 text-gray-400">📭 Nenhum sabor</div>'; return; }
+            cardapio.forEach(p => { grid.innerHTML += `<div class="bg-white rounded-2xl shadow-lg overflow-hidden group"><div class="relative h-48"><img src="${p.imagem}" class="w-full h-full object-cover group-hover:scale-110 transition"><div class="absolute top-3 right-3 bg-red-600 text-white px-2 py-1 rounded-lg text-xs">${p.preco.toLocaleString('pt-BR',{style:'currency',currency:'BRL'})}</div></div><div class="p-5"><h4 class="font-bold text-xl mb-2">${p.nome}</h4><p class="text-gray-500 text-sm mb-4">${p.desc.substring(0,80)}${p.desc.length>80?'...':''}</p><button onclick="adicionarAoCarrinhoComFeedback('${p.nome.replace(/'/g,"\\'")}', ${p.preco}, this)" class="w-full bg-red-500 to-red-600 hover:from-red-600 text-white font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 btn-add"><i class="fa-solid fa-cart-plus"></i> Adicionar ao Carrinho</button></div></div>`; });
+        }
+        
+        function atualizarContadorCarrinho() { const c = document.getElementById('carrinho-count'); if(c) { c.innerText = carrinho.reduce((s,i)=>s+i.quantidade,0); c.classList.add('cart-badge-animation'); setTimeout(()=>c.classList.remove('cart-badge-animation'),300); } }
+        
+        function adicionarAoCarrinhoComFeedback(sabor, preco, btn) {
+            const existente = carrinho.find(i => i.sabor === sabor);
+            if(existente) existente.quantidade++;
+            else carrinho.push({ sabor, preco, quantidade:1 });
+            salvarCarrinho(); atualizarCarrinhoVisual(); atualizarContadorCarrinho();
+            const original = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-check-circle"></i> ✓ Adicionado!'; btn.classList.add('btn-add-success'); btn.disabled = true;
+            showToast(`${sabor} adicionado!`, 'green');
+            setTimeout(() => { btn.innerHTML = original; btn.classList.remove('btn-add-success'); btn.disabled = false; }, 1500);
+        }
+        
+        function removerDoCarrinho(sabor) { carrinho = carrinho.filter(i => i.sabor !== sabor); salvarCarrinho(); atualizarCarrinhoVisual(); atualizarContadorCarrinho(); }
+        
+        function atualizarCarrinhoVisual() {
+            const container = document.getElementById('itens-carrinho');
+            const totalTxt = document.getElementById('total-carrinho');
+            if(!container || !totalTxt) return;
+            if(carrinho.length === 0) { container.innerHTML = '<div class="text-center py-8"><i class="fa-solid fa-cart-shopping text-4xl text-gray-300 mb-2"></i><p class="text-gray-400">Carrinho vazio</p></div>'; totalTxt.innerText = 'R$ 0,00'; return; }
+            container.innerHTML = ''; let total = 0;
+            carrinho.forEach(item => { const sub = item.preco * item.quantidade; total += sub; container.innerHTML += `<div class="flex justify-between py-3"><div><h5 class="font-semibold">${item.sabor}</h5><span class="text-xs text-gray-500">${item.quantidade}x R$ ${item.preco.toFixed(2)}</span></div><div class="flex gap-3"><span class="font-bold">R$ ${sub.toFixed(2)}</span><button onclick="removerDoCarrinho('${item.sabor.replace(/'/g,"\\'")}')" class="text-gray-400 hover:text-red-600"><i class="fa-solid fa-trash-can"></i></button></div></div>`; });
+            totalTxt.innerText = total.toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+        }
+        
+        function abrirModalDoisSabores() {
+            const select1 = document.getElementById('sabor1');
+            const select2 = document.getElementById('sabor2');
+            select1.innerHTML = '<option value="">Selecione um sabor...</option>';
+            select2.innerHTML = '<option value="">Selecione um sabor...</option>';
+            cardapio.forEach(pizza => {
+                select1.innerHTML += `<option value="${pizza.id}" data-nome="${pizza.nome}" data-preco="${pizza.preco}">${pizza.nome} - R$ ${pizza.preco.toFixed(2)}</option>`;
+                select2.innerHTML += `<option value="${pizza.id}" data-nome="${pizza.nome}" data-preco="${pizza.preco}">${pizza.nome} - R$ ${pizza.preco.toFixed(2)}</option>`;
+            });
+            function atualizarPreco() {
+                const s1 = select1.options[select1.selectedIndex];
+                const s2 = select2.options[select2.selectedIndex];
+                if (s1 && s2 && s1.value && s2.value) {
+                    const preco1 = parseFloat(s1.getAttribute('data-preco'));
+                    const preco2 = parseFloat(s2.getAttribute('data-preco'));
+                    const precoMedio = (preco1 + preco2) / 2;
+                    document.getElementById('precoMeiaMeia').innerHTML = `R$ ${precoMedio.toFixed(2).replace('.', ',')}`;
+                } else { document.getElementById('precoMeiaMeia').innerHTML = 'R$ 0,00'; }
+            }
+            select1.onchange = atualizarPreco;
+            select2.onchange = atualizarPreco;
+            document.getElementById('modalDoisSabores').classList.add('active');
+        }
+        
+        function fecharModalDoisSabores() { document.getElementById('modalDoisSabores').classList.remove('active'); }
+        
+        function adicionarPizzaMeiaMeia() {
+            const select1 = document.getElementById('sabor1');
+            const select2 = document.getElementById('sabor2');
+            const s1Option = select1.options[select1.selectedIndex];
+            const s2Option = select2.options[select2.selectedIndex];
+            if (!s1Option.value || !s2Option.value) { alert('❌ Por favor, selecione os dois sabores!'); return; }
+            if (s1Option.value === s2Option.value) { alert('⚠️ Os sabores precisam ser diferentes!'); return; }
+            const nome1 = s1Option.getAttribute('data-nome');
+            const nome2 = s2Option.getAttribute('data-nome');
+            const preco1 = parseFloat(s1Option.getAttribute('data-preco'));
+            const preco2 = parseFloat(s2Option.getAttribute('data-preco'));
+            const precoMedio = (preco1 + preco2) / 2;
+            const nomeCompleto = `🍕 Meia ${nome1} / Meia ${nome2}`;
+            const itemExistente = carrinho.find(item => item.sabor === nomeCompleto);
+            if (itemExistente) itemExistente.quantidade++;
+            else carrinho.push({ sabor: nomeCompleto, preco: precoMedio, quantidade: 1, isMeiaMeia: true, sabores: [nome1, nome2] });
+            salvarCarrinho(); atualizarCarrinhoVisual(); atualizarContadorCarrinho();
+            fecharModalDoisSabores();
+            showToast(`🍕 Pizza Meia a Meia adicionada!`, 'green');
+        }
+        
+        async function finalizarPedidoCliente() {
+            const nome = document.getElementById('cliente-nome').value.trim();
+            const telefone = document.getElementById('cliente-telefone').value.trim();
+            const endereco = document.getElementById('cliente-endereco').value.trim();
+            const pagamento = document.getElementById('cliente-pagamento').value;
+            const troco = document.getElementById('cliente-troco').value.trim();
+            
+            if(carrinho.length === 0) { alert('Carrinho vazio!'); return; }
+            if(!nome || !endereco) { alert('Preencha nome e endereço!'); return; }
+            if(!telefone) { alert('⚠️ Por favor, informe seu telefone com WhatsApp para receber atualizações do pedido!'); return; }
+            if (pagamento === 'Dinheiro' && !troco) { alert('⚠️ Por favor, informe o valor que irá pagar!'); return; }
+            
+            let total = 0, textoItens = '';
+            carrinho.forEach(i => { textoItens += `*${i.quantidade}x* ${i.sabor} - R$ ${(i.preco * i.quantidade).toFixed(2)}\n`; total += i.preco * i.quantidade; });
+            
+            let infoTroco = '', trocoCalculado = 0, valorPago = 0;
+            if (pagamento === 'Dinheiro') {
+                valorPago = parseFloat(troco);
+                trocoCalculado = valorPago - total;
+                if (trocoCalculado < 0) { alert(`⚠️ O valor informado (R$ ${valorPago.toFixed(2)}) é menor que o total!`); return; }
+                infoTroco = `\n💰 *Troco para:* R$ ${valorPago.toFixed(2)} (Troco: R$ ${trocoCalculado.toFixed(2)})`;
+            }
+            
+            const pedido = { id: proximoIdPedido++, nome, telefone, endereco, pagamento, troco: pagamento === 'Dinheiro' ? troco : null, itens: [...carrinho], total, status: 'cozinha', hora: new Date().toLocaleString('pt-BR') };
+            pedidosAdmin.push(pedido); salvarPedidos();
+            
+            tocarSomTelefone();
+            await gerarPDF(pedido);
+            
+            // Enviar mensagem de confirmação para o cliente
+            setTimeout(() => { enviarWhatsAppCliente(pedido, 'confirmacao'); }, 500);
+            
+            // Enviar mensagem para a PIZZARIA (12) 98703-5321
+            const msgPizzaria = `🍕 *NOVO PEDIDO - VARANDAS DELIVERY*\n━━━━━━━━━━━━━━━━━━━━\n📋 *Pedido #${pedido.id}*\n🕐 ${pedido.hora}\n\n👤 *Cliente:* ${nome}\n📱 *Telefone:* ${telefone}\n📍 *Endereço:* ${endereco}\n💳 *Pagamento:* ${pagamento}${pagamento === 'Dinheiro' ? `\n💰 *Troco para:* R$ ${valorPago.toFixed(2)} (Troco: R$ ${trocoCalculado.toFixed(2)})` : ''}\n\n📦 *Itens:*\n${textoItens}\n━━━━━━━━━━━━━━━━━━━━\n💰 *TOTAL:* R$ ${total.toFixed(2)}\n\n✅ *Pedido confirmado! Preparem para entrega.*`;
+            enviarWhatsAppPizzaria(msgPizzaria);
+            
+            carrinho = []; salvarCarrinho(); atualizarCarrinhoVisual(); atualizarContadorCarrinho();
+            document.getElementById('cliente-nome').value = ''; document.getElementById('cliente-telefone').value = ''; 
+            document.getElementById('cliente-endereco').value = ''; document.getElementById('cliente-troco').value = '';
+            document.getElementById('campo-troco').classList.add('hidden');
+            
+            alert(`✅ Pedido #${pedido.id} enviado!\n🔔 TELEFONE TOCANDO!\n📱 Pedido enviado para a pizzaria (12) 98703-5321!`);
+            if(isModoClienteOnly()) setTimeout(() => alert('📱 Pedido enviado! Você receberá atualizações por WhatsApp.'), 500);
+        }
+        
+        function simularChegadaPedido() {
+            if(cardapio.length === 0) { alert("Cadastre pizzas!"); return; }
+            const clientes = ["Carlos Silva","Fernanda Lima","Roberto Alves","Patrícia Souza","Luciano Mendes"];
+            const telefones = ["11999998888","11988887777","11977776666","11966665555","11955554444"];
+            const enderecos = ["Av. Brasil, 500 - Centro","Rua das Flores, 123 - Jardim","Praça da Sé, 45 - Centro","Alameda Santos, 789 - Paulista"];
+            const p = cardapio[Math.floor(Math.random() * cardapio.length)];
+            const pedido = { id: proximoIdPedido++, nome: clientes[Math.floor(Math.random()*clientes.length)], telefone: telefones[Math.floor(Math.random()*telefones.length)], endereco: enderecos[Math.floor(Math.random()*enderecos.length)], pagamento: ["Pix","Cartão","Dinheiro"][Math.floor(Math.random()*3)], itens: [{ sabor: p.nome, preco: p.preco, quantidade: Math.floor(Math.random()*2)+1 }], total: p.preco * (Math.floor(Math.random()*2)+1), status: 'cozinha', hora: new Date().toLocaleString('pt-BR') };
+            pedidosAdmin.push(pedido); salvarPedidos(); renderizarPainelAdmin();
+            tocarSomTelefone();
+            const msgSimulacao = `🧪 *PEDIDO SIMULADO - VARANDAS DELIVERY*\n━━━━━━━━━━━━━━━━━━━━\n📋 *Pedido #${pedido.id} (SIMULAÇÃO)*\n🕐 ${pedido.hora}\n\n👤 *Cliente:* ${pedido.nome}\n📱 *Telefone:* ${pedido.telefone}\n📍 *Endereço:* ${pedido.endereco}\n💳 *Pagamento:* ${pedido.pagamento}\n\n📦 *Itens:* ${pedido.itens[0].quantidade}x ${pedido.itens[0].sabor}\n💰 *Total:* R$ ${pedido.total.toFixed(2)}\n\n🧪 *Este é um pedido de SIMULAÇÃO para teste do sistema*`;
+            enviarWhatsAppPizzaria(msgSimulacao);
+            alert(`✅ Pedido #${pedido.id} simulado!\n📱 Mensagem enviada para (12) 98703-5321!`);
+        }
+        
+        function alterarStatusPedido(id, novoStatus) { 
+            const pedido = pedidosAdmin.find(p => p.id === id); 
+            if(pedido) { 
+                const statusAntigo = pedido.status;
+                pedido.status = novoStatus; 
+                salvarPedidos(); 
+                renderizarPainelAdmin();
+                
+                if (novoStatus === 'pronto' && statusAntigo !== 'pronto') {
+                    tocarSomTelefone();
+                    imprimirComprovanteCozinha(pedido);
+                    const msgPronto = `✅ *PEDIDO PRONTO - VARANDAS DELIVERY*\n━━━━━━━━━━━━━━━━━━━━\n📋 *Pedido #${pedido.id}*\n👤 *Cliente:* ${pedido.nome}\n📍 *Endereço:* ${pedido.endereco}\n📦 *Itens:* ${pedido.itens.map(i => `${i.quantidade}x ${i.sabor}`).join(', ')}\n💰 *Total:* R$ ${pedido.total.toFixed(2)}\n\n✅ *Pedido pronto para despacho!*`;
+                    enviarWhatsAppPizzaria(msgPronto);
+                    showToast(`🖨️ Comprovante impresso e WhatsApp enviado!`, 'blue');
+                }
+                
+                if (novoStatus === 'entrega' && statusAntigo !== 'entrega') {
+                    tocarSomTelefone();
+                    enviarWhatsAppCliente(pedido, 'despacho');
+                    const msgEntrega = `🏍️ *PEDIDO SAIU PARA ENTREGA - VARANDAS DELIVERY*\n━━━━━━━━━━━━━━━━━━━━\n📋 *Pedido #${pedido.id}*\n👤 *Cliente:* ${pedido.nome}\n📍 *Endereço:* ${pedido.endereco}\n📦 *Itens:* ${pedido.itens.map(i => `${i.quantidade}x ${i.sabor}`).join(', ')}\n💰 *Total:* R$ ${pedido.total.toFixed(2)}\n\n🛵 *Pedido a caminho do cliente!*`;
+                    enviarWhatsAppPizzaria(msgEntrega);
+                    showToast(`📱 Mensagem de despacho enviada para cliente e pizzaria!`, 'blue');
+                }
+            } 
+        }
+        
+        function renderizarPainelAdmin() {
+            const colC = document.getElementById('coluna-cozinha'), colP = document.getElementById('coluna-pronto'), colE = document.getElementById('coluna-entrega');
+            if(!colC||!colP||!colE) return;
+            colC.innerHTML = ''; colP.innerHTML = ''; colE.innerHTML = '';
+            let cC=0, cP=0, cE=0;
+            pedidosAdmin.forEach(p => {
+                const itensStr = p.itens.map(i => `${i.quantidade}x ${i.sabor}`).join(', ');
+                const infoTroco = (p.pagamento === 'Dinheiro' && p.troco) ? `<p class="text-xs text-gray-500 mt-1"><i class="fa-solid fa-money-bill-wave"></i> Troco para: R$ ${parseFloat(p.troco).toFixed(2)} (Troco: R$ ${(parseFloat(p.troco) - p.total).toFixed(2)})</p>` : '';
+                const html = `<div class="bg-white p-4 rounded-xl shadow-md border-l-4 ${p.status==='cozinha'?'border-orange-500':p.status==='pronto'?'border-blue-500':'border-green-500'}"><div class="flex justify-between"><div><span class="text-xs font-bold bg-gray-100 px-2 py-1 rounded">#${p.id}</span><span class="text-xs text-gray-400 ml-2">${p.hora}</span></div><span class="font-bold">R$ ${p.total.toFixed(2)}</span></div><div class="mt-2"><h4 class="font-bold">${p.nome}</h4><p class="text-xs text-gray-500"><i class="fa-solid fa-phone"></i> ${p.telefone || 'Não informado'}</p><p class="text-xs text-gray-500"><i class="fa-solid fa-location-dot"></i> ${p.endereco}</p><p class="text-xs text-gray-500"><i class="fa-solid fa-credit-card"></i> ${p.pagamento}</p>${infoTroco}</div><div class="bg-gray-50 p-2 rounded mt-2 text-xs"><strong>Itens:</strong> ${itensStr}</div><div class="flex gap-2 mt-3">${p.status==='cozinha'?`<button onclick="alterarStatusPedido(${p.id},'pronto')" class="flex-1 bg-blue-600 text-white py-2 rounded text-xs">✅ Pronto</button>`:''}${p.status==='pronto'?`<button onclick="alterarStatusPedido(${p.id},'cozinha')" class="bg-gray-300 px-3 py-2 rounded text-xs">↩️ Voltar</button><button onclick="alterarStatusPedido(${p.id},'entrega')" class="flex-1 bg-green-600 text-white py-2 rounded text-xs">🏍️ Despachar</button>`:''}${p.status==='entrega'?`<button onclick="alterarStatusPedido(${p.id},'pronto')" class="bg-gray-300 px-3 py-2 rounded text-xs">↩️ Voltar</button><button onclick="alterarStatusPedido(${p.id},'finalizado')" class="flex-1 bg-gray-800 text-white py-2 rounded text-xs">✅ Concluir</button>`:''}</div></div>`;
+                if(p.status==='cozinha') { colC.innerHTML += html; cC++; }
+                else if(p.status==='pronto') { colP.innerHTML += html; cP++; }
+                else if(p.status==='entrega') { colE.innerHTML += html; cE++; }
+            });
+            document.getElementById('qtd-cozinha').innerText = cC; document.getElementById('qtd-pronto').innerText = cP; document.getElementById('qtd-entrega').innerText = cE;
+            if(cC===0) colC.innerHTML = '<div class="text-center py-8 text-gray-400"><i class="fa-solid fa-utensils text-4xl mb-2"></i><p>Sem pedidos</p></div>';
+            if(cP===0) colP.innerHTML = '<div class="text-center py-8 text-gray-400"><i class="fa-solid fa-box text-4xl mb-2"></i><p>Sem pedidos prontos</p></div>';
+            if(cE===0) colE.innerHTML = '<div class="text-center py-8 text-gray-400"><i class="fa-solid fa-motorcycle text-4xl mb-2"></i><p>Sem pedidos em rota</p></div>';
+        }
+        
+        carregarDados();
+        renderizarCardapioCliente();
+        atualizarCarrinhoVisual();
+        atualizarContadorCarrinho();
+        configurarModo();
+        if(!isModoClienteOnly()) { renderizarListaCardapioAdmin(); renderizarPainelAdmin(); atualizarLinkAdmin(); }
+    </script>
+</body>
+</html>
