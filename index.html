@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Varandas Delivery - Sistema Integrado Profissional</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -490,6 +490,29 @@
         let cardapio = [], carrinho = [], pedidosAdmin = [], proximoIdPedido = 1001;
         let audioContext = null;
 
+        // FUNÇÃO CORRIGIDA PARA ABRIR WHATSAPP - FUNCIONA NO APK!
+        function abrirWhatsApp(numero, mensagem) {
+            // Remove tudo que não é número
+            let numeroLimpo = numero.replace(/\D/g, '');
+            
+            // Garante o código do país (55 para Brasil)
+            if (!numeroLimpo.startsWith('55')) {
+                if (numeroLimpo.length === 11 || numeroLimpo.length === 10) {
+                    numeroLimpo = '55' + numeroLimpo;
+                }
+            }
+            
+            // Usa o link https://wa.me/ que funciona em qualquer lugar (navegador, APK, WebView)
+            const url = `https://wa.me/${numeroLimpo}?text=${encodeURIComponent(mensagem)}`;
+            
+            // Tenta abrir de diferentes formas para garantir compatibilidade
+            if (window.open) {
+                window.open(url, '_blank');
+            } else {
+                window.location.href = url;
+            }
+        }
+
         document.getElementById('cliente-pagamento').addEventListener('change', function() {
             const campoTroco = document.getElementById('campo-troco');
             if (this.value === 'Dinheiro') {
@@ -545,27 +568,21 @@
         
         function testarSomTelefone() { tocarSomTelefone(); showToast('🔔 Teste de som executado!', 'blue'); }
 
-        // Função para enviar WhatsApp para o número da pizzaria (12) 98703-5321
+        // Função para enviar WhatsApp para o número da pizzaria (12) 98703-5321 - CORRIGIDA
         function enviarWhatsAppPizzaria(mensagem) {
-            const msg = encodeURIComponent(mensagem);
-            window.open(`https://wa.me/${NUMERO_PIZZARIA}?text=${msg}`, '_blank');
+            abrirWhatsApp(NUMERO_PIZZARIA, mensagem);
         }
 
-        // Função para enviar WhatsApp para o cliente
+        // Função para enviar WhatsApp para o cliente - CORRIGIDA
         function enviarWhatsAppCliente(pedido, tipo) {
             if (!pedido.telefone || pedido.telefone === '') return;
             
             let mensagem = '';
-            let numero = pedido.telefone.replace(/\D/g, '');
-            if (numero.length === 11 || numero.length === 10) {
-                if (numero.length === 10) numero = '55' + numero;
-                if (numero.length === 11) numero = '55' + numero;
-            }
             
             const itensResumo = pedido.itens.map(i => `${i.quantidade}x ${i.sabor}`).join(', ');
             
             if (tipo === 'despacho') {
-                mensagem = encodeURIComponent(
+                mensagem = 
                     `🍕 *VARANDAS DELIVERY* 🍕\n\n` +
                     `✅ *SEU PEDIDO SAIU PARA ENTREGA!*\n\n` +
                     `📋 *Pedido #${pedido.id}*\n` +
@@ -575,8 +592,7 @@
                     `💰 *Total:* R$ ${pedido.total.toFixed(2)}\n\n` +
                     `🛵 *Seu pedido está a caminho!*\n` +
                     `⏱️ *Tempo estimado:* 10 a 20 minutos\n\n` +
-                    `💚 *Agradecemos pela preferência!*`
-                );
+                    `💚 *Agradecemos pela preferência!*`;
             } else if (tipo === 'confirmacao') {
                 let infoTroco = '';
                 if (pedido.pagamento === 'Dinheiro' && pedido.troco) {
@@ -585,7 +601,7 @@
                     infoTroco = `\n💰 *Troco:* R$ ${trocoCalculado.toFixed(2)} (Você pagará R$ ${valorPago.toFixed(2)})\n`;
                 }
                 
-                mensagem = encodeURIComponent(
+                mensagem = 
                     `🍕 *VARANDAS DELIVERY* 🍕\n\n` +
                     `✅ *PEDIDO CONFIRMADO!*\n\n` +
                     `📋 *Pedido #${pedido.id}*\n` +
@@ -596,12 +612,11 @@
                     `⏱️ *Seu pedido está sendo preparado!*\n` +
                     `🕐 *Tempo estimado para entrega:* 10 a 20 minutos\n\n` +
                     `🔔 *Você receberá outra mensagem quando seu pedido sair para entrega!*\n\n` +
-                    `💚 *Obrigado por escolher a Varandas Delivery!*`
-                );
+                    `💚 *Obrigado por escolher a Varandas Delivery!*`;
             }
             
             if (mensagem) {
-                window.open(`https://wa.me/${numero}?text=${mensagem}`, '_blank');
+                abrirWhatsApp(pedido.telefone, mensagem);
                 showToast(`📱 Mensagem enviada para ${pedido.nome}`, 'green');
             }
         }
@@ -686,7 +701,7 @@
                 const trocoCalculado = valorPago - pedido.total;
                 infoTroco = `<p><strong>💰 Troco para:</strong> R$ ${valorPago.toFixed(2)} (Troco: R$ ${trocoCalculado.toFixed(2)})</p>`;
             }
-            const comprovanteHtml = `<div style="font-family: monospace; max-width: 300px; margin: 0 auto; padding: 20px; border: 2px dashed #333; border-radius: 10px;"><div style="text-align: center; border-bottom: 1px dashed #333; padding-bottom: 10px;"><h2>🍕 VARANDAS DELIVERY</h2><p>Pedido #${pedido.id}</p></div><div><p><strong>Cliente:</strong> ${pedido.nome}</p><p><strong>Telefone:</strong> ${pedido.telefone || 'Não informado'}</p><p><strong>Endereço:</strong> ${pedido.endereco}</p><p><strong>Pagamento:</strong> ${pedido.pagamento}</p>${infoTroco}<p><strong>Data:</strong> ${new Date().toLocaleString('pt-BR')}</p></div><hr/><table width="100%">${itensHtml}<tr style="border-top: 1px solid #ccc;"><td><strong>TOTAL</strong></td><td align="right"><strong>R$ ${pedido.total.toFixed(2)}</strong></td></tr></table><hr/><div style="text-align:center;font-size:11px"><p>✅ Pedido confirmado!</p><p>⏱️ Tempo estimado: 10 a 20 minutos</p></div></div>`;
+            const comprovanteHtml = `<div style="font-family: monospace; max-width: 300px; margin: 0 auto; padding: 20px; border: 2px dashed #333; border-radius: 10px;"><div style="text-align: center; border-bottom: 1px dashed #333; padding-bottom: 10px;"><h2>🍕 VARANDAS DELIVERY</h2><p>Pedido #${pedido.id}</p></div><div><p><strong>Cliente:</strong> ${pedido.nome}</p><p><strong>Telefone:</strong> ${pedido.telefone || 'Não informado'}</p><p><strong>Endereço:</strong> ${pedido.endereco}</p><p><strong>Pagamento:</strong> ${pedido.pagamento}</p>${infoTroco}<p><strong>Data:</strong> ${new Date().toLocaleString('pt-BR')}</p></div><hr/><table width="100%">${itensHtml}<tr style="border-top: 1px solid #ccc;"><td><strong>TOTAL</strong></td><td style="text-align: right;"><strong>R$ ${pedido.total.toFixed(2)}</strong></td></tr></table><hr/><div style="text-align:center;font-size:11px"><p>✅ Pedido confirmado!</p><p>⏱️ Tempo estimado: 10 a 20 minutos</p></div></div>`;
             const element = document.createElement('div');
             element.innerHTML = comprovanteHtml;
             element.style.position = 'absolute'; element.style.left = '-9999px'; element.style.top = '-9999px';
@@ -702,7 +717,7 @@
         function isModoClienteOnly() { return new URLSearchParams(window.location.search).get('modo') === 'cliente'; }
         function showToast(mensagem, cor) { const toast = document.createElement('div'); toast.className = `toast bg-${cor}-500`; toast.innerHTML = `<i class="fa-solid fa-check-circle mr-2"></i> ${mensagem}`; document.body.appendChild(toast); setTimeout(() => toast.remove(), 3000); }
         function copiarLinkCliente() { navigator.clipboard.writeText(getClienteLink()); showToast('Link copiado!', 'green'); }
-        function compartilharWhatsApp() { window.open(`https://wa.me/${NUMERO_PIZZARIA}?text=${encodeURIComponent(`🍕 Varandas Delivery 🍕\n\nFaça seu pedido online:\n${getClienteLink()}`)}`, '_blank'); }
+        function compartilharWhatsApp() { abrirWhatsApp(NUMERO_PIZZARIA, `🍕 Varandas Delivery 🍕\n\nFaça seu pedido online:\n${getClienteLink()}`); }
         function atualizarLinkAdmin() { const el = document.getElementById('link-compartilhar'); if(el) el.innerText = getClienteLink(); }
         
         function carregarDados() {
@@ -894,7 +909,7 @@
             setTimeout(() => { enviarWhatsAppCliente(pedido, 'confirmacao'); }, 500);
             
             // Enviar mensagem para a PIZZARIA (12) 98703-5321
-            const msgPizzaria = `🍕 *NOVO PEDIDO - VARANDAS DELIVERY*\n━━━━━━━━━━━━━━━━━━━━\n📋 *Pedido #${pedido.id}*\n🕐 ${pedido.hora}\n\n👤 *Cliente:* ${nome}\n📱 *Telefone:* ${telefone}\n📍 *Endereço:* ${endereco}\n💳 *Pagamento:* ${pagamento}${pagamento === 'Dinheiro' ? `\n💰 *Troco para:* R$ ${valorPago.toFixed(2)} (Troco: R$ ${trocoCalculado.toFixed(2)})` : ''}\n\n📦 *Itens:*\n${textoItens}\n━━━━━━━━━━━━━━━━━━━━\n💰 *TOTAL:* R$ ${total.toFixed(2)}\n\n✅ *Pedido confirmado! Preparem para entrega.*`;
+            const msgPizzaria = `🍕 *NOVO PEDIDO - VARANDAS DELIVERY*\n━━━━━━━━━━━━━━━━━━━━\n📋 *Pedido #${pedido.id}*\n🕐 ${pedido.hora}\n\n👤 *Cliente:* ${nome}\n📱 *Telefone:* ${telefone}\n📍 *Endereço:* ${endereco}\n💳 *Pagamento:* ${pagamento}${pagamento === 'Dinheiro' ? `\n💰 *Troco para:* R$ ${valorPago.toFixed(2)} (Troco: R$ ${trocoCalculado.toFixed(2)})` : ''}\n\n📦 *Itens:*\n${textoItens}\n━━━━━━━━━━━━━━━━━━━━\n💰 *TOTAL:* R$ ${total.toFixed(2)}\n\n✅ *Pedido confirmado! Preparem para entrega.`;
             enviarWhatsAppPizzaria(msgPizzaria);
             
             carrinho = []; salvarCarrinho(); atualizarCarrinhoVisual(); atualizarContadorCarrinho();
